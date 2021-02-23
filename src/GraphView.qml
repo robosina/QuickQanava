@@ -50,6 +50,7 @@ Qan.AbstractGraphView {
     property color  gridThickColor: grid ? grid.thickColor : lineGrid.thickColor
 
     //! Visual selection rectangle (CTRL + right click drag) color, default to Material blue.
+    property color  selectionRectBorderColor: Qt.rgba(0.129, 0.588, 0.953, 1) // Material blue: #2196f3
     property color  selectionRectColor: Qt.rgba(0.129, 0.588, 0.953, 1) // Material blue: #2196f3
 
     property color  resizeHandlerColor: Qt.rgba(0.117, 0.564, 1.0)  // dodgerblue=rgb( 30, 144, 255)
@@ -108,9 +109,10 @@ Qan.AbstractGraphView {
         x: 0; y: 0
         width: 10; height: 10
         border.width: 2
-        border.color: selectionRectColor
-        color: Qt.rgba(0, 0, 0, 0)  // transparent
+        border.color: selectionRectBorderColor
+        color: selectionRectColor
         visible: false
+        opacity: 0.3
     }
     selectionRectItem: selectionRect
 
@@ -122,12 +124,15 @@ Qan.AbstractGraphView {
         groupResizer.target = null
         groupResizer.visible = false
 
-        // Hide the default visual edge connector
+//        // Hide the default visual edge connector
         if (graph &&
             graph.connectorEnabled &&
             graph.connector &&
             graph.connector.visible)
-            graph.connector.visible = false
+        {
+            graph.connector.sourceNode = null
+            graph.connector.sourcePort = null
+        }
 
         graphView.focus = true           // User clicked outside a graph item, remove it's eventual active focus
     }
@@ -142,10 +147,10 @@ Qan.AbstractGraphView {
             if (port.node)    // Force port host node on top
                 graph.sendToFront(port.node.item)
             if (graph.connector &&
-                graph.connectorEnabled)
+                graph.connectorEnabled &&
+                    (graph.connector.attachMode === Qan.Connector.NodePort ||
+                     graph.connector.attachMode === Qan.Connector.PortOnly))
                 graph.connector.sourcePort = port
-        } else if (graph) {
-            graph.connector.visible = false
         }
     }
     onPortRightClicked: { }
@@ -175,8 +180,9 @@ Qan.AbstractGraphView {
             if (graph.connector &&
                 graph.connectorEnabled &&
                  (node.item.connectable === Qan.NodeItem.Connectable ||
-                  node.item.connectable === Qan.NodeItem.OutConnectable)) {      // Do not show visual connector if node is not visually "connectable"
-                graph.connector.visible = true
+                  node.item.connectable === Qan.NodeItem.OutConnectable) &&
+                    (graph.connector.attachMode === Qan.Connector.NodePort ||
+                     graph.connector.attachMode === Qan.Connector.NodeOnly)) {      // Do not show visual connector if node is not visually "connectable"
                 graph.connector.sourceNode = node
                 // Connector should be half on top of node
                 graph.connector.y = -graph.connector.height / 2
@@ -202,7 +208,6 @@ Qan.AbstractGraphView {
             }
         } else if (graph) {
             nodeItemRatioWatcher.target = null
-            graph.connector.visible = false
             resizer.visible = false
         }
     }
@@ -265,14 +270,14 @@ Qan.AbstractGraphView {
             console.error('Qan.GraphView.onRequestGrabGraph(): Error, graph or graph container item is invalid.')
             return
         }
-        let localFilePath = graphView.urlToLocalFile(filePath)
+        var localFilePath = graphView.urlToLocalFile(filePath)
         if (!localFilePath || localFilePath === '') {
             console.error('GraphView.grapbGraphImage(): Invalid file url ' + filePath)
             return
         }
         if (!border)
             border = 0
-        let origin = Qt.point(graph.containerItem.childrenRect.x, graph.containerItem.childrenRect.y)
+        var origin = Qt.point(graph.containerItem.childrenRect.x, graph.containerItem.childrenRect.y)
         graph.containerItem.width = graph.containerItem.childrenRect.width - (origin.x < 0. ? origin.x : 0.)
         graph.containerItem.height = graph.containerItem.childrenRect.height - (origin.y < 0. ? origin.y : 0.)
 
@@ -281,8 +286,8 @@ Qan.AbstractGraphView {
             zoom = 1.0
         if (zoom > 2.0001)
             zoom = 2.
-        let border2 = 2. * border
-        let imageSize = Qt.size(border2 + graph.containerItem.childrenRect.width * zoom,
+        var border2 = 2. * border
+        var imageSize = Qt.size(border2 + graph.containerItem.childrenRect.width * zoom,
                                 border2 + graph.containerItem.childrenRect.height * zoom)
         graphImageShader.width = imageSize.width
         graphImageShader.height = imageSize.height

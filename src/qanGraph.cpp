@@ -100,6 +100,7 @@ void    Graph::componentComplete()
                     _connector->setGraph(this);
                     _connector->setEnabled(getConnectorEnabled());
                     _connector->setVisible(false);
+                    _connector->setAttachMode(qan::Connector::AttachMode::NodePort);
                     _connector->setProperty("edgeColor", getConnectorEdgeColor());
                     _connector->setProperty("connectorColor", getConnectorColor());
                     _connector->setProperty("createDefaultEdge", getConnectorCreateDefaultEdge());
@@ -245,6 +246,16 @@ void    Graph::setConnectorSource(qan::Node* sourceNode) noexcept
             _connector->setSourceNode(sourceNode);
         _connector->setVisible(getConnectorEnabled());
         _connector->setEnabled(getConnectorEnabled());
+    }
+}
+
+void    Graph::setAttachMode( qan::Connector::AttachMode attachMode ) noexcept
+{
+    if ( _attachMode != attachMode ) {
+        _attachMode = attachMode;
+        if ( _connector )
+            _connector->setAttachMode( attachMode );
+        emit attachModeChanged();
     }
 }
 
@@ -697,7 +708,7 @@ qan::Edge*  Graph::insertEdge(QObject* source, QObject* destination, QQmlCompone
         emit edgeInserted(edge);
     } else
         qWarning() << "qan::Graph::insertEdge(): Error: Unable to find a valid insertEdge() method for arguments " << source << " and " << destination;
-    qWarning() << "qan::Graph::insertEdge(): edge.ownership=" << QQmlEngine::objectOwnership(edge);
+//    qWarning() << "qan::Graph::insertEdge(): edge.ownership=" << QQmlEngine::objectOwnership(edge);
     return edge;
 }
 
@@ -785,7 +796,7 @@ void    Graph::bindEdgeSource( qan::Edge& edge, qan::PortItem& outPort ) noexcep
 
     if ( isEdgeSourceBindable(outPort) ) {
         edgeItem->setSourceItem(&outPort);
-        outPort.getOutEdgeItems().append(edgeItem);
+        outPort.addOutEdgeItem(*edgeItem);
     }
 }
 
@@ -799,7 +810,7 @@ void    Graph::bindEdgeDestination( qan::Edge& edge, qan::PortItem& inPort ) noe
 
     if ( isEdgeDestinationBindable(inPort) ) {
         edgeItem->setDestinationItem(&inPort);
-        inPort.getInEdgeItems().append(edgeItem);
+        inPort.addInEdgeItem(*edgeItem);
     }
 }
 
@@ -1194,8 +1205,16 @@ void    addToSelectionImpl( Primitive_t& primitive,
     }
 }
 
-void    Graph::addToSelection( qan::Node& node ) { addToSelectionImpl<qan::Node>(node, _selectedNodes, *this); }
-void    Graph::addToSelection( qan::Group& group ) { addToSelectionImpl<qan::Group>(group, _selectedGroups, *this); }
+void    Graph::addToSelection( qan::Node& node )
+{
+    addToSelectionImpl<qan::Node>(node, _selectedNodes, *this);
+    emit selectedNodesChanged();
+}
+void    Graph::addToSelection( qan::Group& group )
+{
+    addToSelectionImpl<qan::Group>(group, _selectedGroups, *this);
+    emit selectedGroupsChanged();
+}
 
 template < class Primitive_t >
 void    removeFromSelectionImpl( Primitive_t& primitive,
@@ -1205,8 +1224,16 @@ void    removeFromSelectionImpl( Primitive_t& primitive,
         selectedPrimitives.removeAll( &primitive );
 }
 
-void    Graph::removeFromSelection( qan::Node& node ) { removeFromSelectionImpl<qan::Node>(node, _selectedNodes); }
-void    Graph::removeFromSelection( qan::Group& group ) { removeFromSelectionImpl<qan::Group>(group, _selectedGroups); }
+void    Graph::removeFromSelection( qan::Node& node )
+{
+    removeFromSelectionImpl<qan::Node>(node, _selectedNodes);
+    emit selectedNodesChanged();
+}
+void    Graph::removeFromSelection( qan::Group& group )
+{
+    removeFromSelectionImpl<qan::Group>(group, _selectedGroups);
+    emit selectedGroupsChanged();
+}
 
 // Note: Called from
 void    Graph::removeFromSelection( QQuickItem* item ) {
@@ -1214,12 +1241,14 @@ void    Graph::removeFromSelection( QQuickItem* item ) {
     if ( nodeItem != nullptr &&
          nodeItem->getNode() != nullptr ) {
         _selectedNodes.removeAll(nodeItem->getNode());
+        emit selectedNodesChanged();
         //nodeItem->setSelected(false);
     } else {
         const auto groupItem = qobject_cast<qan::GroupItem*>(item);
         if ( groupItem != nullptr &&
              groupItem->getGroup() != nullptr ) {
             _selectedGroups.removeAll(groupItem->getGroup());
+            emit selectedGroupsChanged();
         }
     }
 }

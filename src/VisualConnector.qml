@@ -84,7 +84,20 @@ Qan.Connector {
     x: connectorMargin
     y: topMargin
 
-    visible: false
+    visible: {
+        if (connectorItem) {
+            switch (attachMode) {
+            case Qan.Connector.NodePort:
+                return sourceNode || sourcePort // Visible only if a valid source node/port is set
+            case Qan.Connector.PortOnly:
+                return sourcePort // Visible only if a valid source port is set
+            case Qan.Connector.NodeOnly:
+                return sourceNode // Visible only if a valid source node is set
+            }
+        }
+        return false
+    }
+
     selectable: false
     clip: false; antialiasing: true
 
@@ -92,6 +105,25 @@ Qan.Connector {
      *  or port configuration, also restore position bindings to source.
      */
     function configureConnectorPosition() {
+
+        switch (attachMode)
+        {
+        case Qan.Connector.NodePort:
+            connectorPortPosition()
+            connectorNodePosition()
+            break
+
+        case Qan.Connector.PortOnly:
+            connectorPortPosition()
+            break
+
+        case Qan.Connector.NodeOnly:
+            connectorNodePosition()
+            break
+        }
+    }
+
+    function connectorPortPosition() {
         if (sourcePort) {
             switch (sourcePort.dockType) {
             case Qan.NodeItem.Left:
@@ -115,7 +147,11 @@ Qan.Connector {
                 visualConnector.z = Qt.binding( function(){ return sourcePort.z + 1. } )
                 break;
             }
-        } else if (sourceNode) {
+        }
+    }
+
+    function connectorNodePosition() {
+        if (sourceNode && sourceNode.item) {
             visualConnector.x = Qt.binding( function(){ return sourceNode.item.width + connectorMargin } )
             visualConnector.y = -visualConnector.height / 2 + visualConnector.topMargin
             visualConnector.z = Qt.binding( function(){ return sourceNode.item.z + 1. } )
@@ -147,7 +183,7 @@ Qan.Connector {
             return;
         }
         // Drag.target is valid, trying to find a valid target
-        let source = visualConnector.sourceNode ? visualConnector.sourceNode : visualConnector.sourcePort
+        var source = visualConnector.sourceNode ? visualConnector.sourceNode : visualConnector.sourcePort
         if (source) {   // Note: source might be a qan::Node OR a qan::PortItem
             if (source.item &&
                 Drag.target === source.item) { // Prevent creation of a circuit on source node
@@ -158,8 +194,8 @@ Qan.Connector {
                 connectorItem.state = "NORMAL"
             } else {
                 // Potentially, we have a valid node or group target
-                let target = Drag.target.group ? Drag.target.group : Drag.target.node
-                let connectable = Drag.target.connectable === Qan.NodeItem.Connectable ||
+                var target = Drag.target.group ? Drag.target.group : Drag.target.node
+                var connectable = Drag.target.connectable === Qan.NodeItem.Connectable ||
                                   Drag.target.connectable === Qan.NodeItem.InConnectable
                 if (target && connectable)
                     connectorItem.state = "HILIGHT"
