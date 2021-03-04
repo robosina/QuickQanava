@@ -61,7 +61,7 @@ ApplicationWindow {
             menu.targetEdge = undefined
         }
         MenuItem {
-            text: "Insert Node"
+            text: "اضافه کردن نود جدید"
             onTriggered: {
                 var n = topology.insertNode()
                 centerItem(n.item)
@@ -71,10 +71,10 @@ ApplicationWindow {
         MenuItem {
             text: {
                 if (topology.selectedNodes.length > 1)
-                    return "Remove All"
+                    return "حذف کردن همه‌ی نودها"
                 else if (menu.targetGroup !== undefined)
-                    return "Remove Group"
-                return "Remove node"
+                    return "حذف کردن گروه"
+                return "حذف کردن نود"
             }
             enabled: menu.targetNode !== undefined ||
                      menu.targetGroup !== undefined ||
@@ -107,7 +107,7 @@ ApplicationWindow {
             }
         }
         MenuItem {
-            text: "Insert Group"
+            text: "اضافه کردن گروه"
             onTriggered: {
                 var n = topology.insertGroup()
                 centerItem(n.item)
@@ -179,21 +179,21 @@ ApplicationWindow {
         } // Menu: ports
         MenuSeparator { }
         MenuItem {
-            text: "Show Radar"
+            text: "نمایش رادار"
             onTriggered: graphPreview.visible = checked
             checkable: true
             checked: graphPreview.visible
         }
         MenuItem {
-            text: "Export to PNG"
+            text: "خروجی گرفتن"
             onTriggered: screenshotPopup.open()
         }
         MenuItem {
-            text: "Fit Graph in View"
+            text: "فیت کردن"
             onTriggered: graphView.fitInView()
         }
         MenuItem {
-            text: "Clear Graph"
+            text: "پاک کردن نودهای پارکینگ"
             onTriggered: topology.clearGraph()
         }
     } // Menu: menu
