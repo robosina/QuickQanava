@@ -38,6 +38,9 @@
 
 namespace qan { // ::qan
 
+ProcessingNode::ProcessingNode(QQuickItem* parent) :
+    qan::Node{parent} { }
+
 FaceNode::FaceNode(QQuickItem* parent) :
     qan::Node{parent} { }
 
@@ -56,6 +59,23 @@ void    FaceNode::setImage(QUrl image) noexcept
         setLabel(image.toString());
         emit imageChanged();
     }
+}
+
+void ProcessingNode::setImage(QUrl image) noexcept
+{
+    if ( image != _image ) {
+        _image = image;
+        setLabel(image.toString());
+        emit imageChanged();
+    }
+}
+
+QQmlComponent *ProcessingNode::delegate(QQmlEngine &engine) noexcept
+{
+    static std::unique_ptr<QQmlComponent>   delegate;
+    if ( !delegate )
+        delegate = std::make_unique<QQmlComponent>(&engine, "qrc:/ProcessingNode.qml");
+    return delegate.get();
 }
 
 } // ::qan

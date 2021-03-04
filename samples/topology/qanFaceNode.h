@@ -67,6 +67,33 @@ public:
     //-------------------------------------------------------------------------
 };
 
+class ProcessingNode : public qan::Node
+{
+    Q_OBJECT
+public:
+    explicit ProcessingNode(QQuickItem* parent = nullptr);
+    virtual ~ProcessingNode() override = default;
+
+private:
+    Q_DISABLE_COPY(ProcessingNode)
+public:
+    Q_PROPERTY(QUrl image READ getImage WRITE setImage NOTIFY imageChanged)
+    const QUrl&     getImage() const noexcept { return _image; }
+    void            setImage(QUrl image) noexcept;
+private:
+    QUrl            _image;
+
+signals:
+    void            imageChanged();
+
+    /*! \name Node Static Factories *///---------------------------------------
+    //@{
+public:
+    static  QQmlComponent*      delegate(QQmlEngine& engine) noexcept;
+    //@}
+    //-------------------------------------------------------------------------
+};
+
 class FaceGraph : public qan::Graph
 {
     Q_OBJECT
@@ -77,6 +104,11 @@ public:
 public:
     Q_INVOKABLE qan::Node* insertFaceNode() {
         auto node = insertNode<FaceNode>(nullptr);
+        return node;
+    }
+
+    Q_INVOKABLE qan::Node* insertProcessingNode() {
+        auto node = insertNode<ProcessingNode>(nullptr);
         return node;
     }
 };

@@ -42,8 +42,8 @@ import "qrc:/QuickQanava"   as Qan
 
 Qan.NodeItem {
     id: faceNodeItem
-    Layout.preferredWidth: 100
-    Layout.preferredHeight: 125
+    Layout.preferredWidth: 200
+    Layout.preferredHeight: 225
     width: Layout.preferredWidth
     height: Layout.preferredHeight
 

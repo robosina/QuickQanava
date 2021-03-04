@@ -9,13 +9,14 @@ RESOURCES   += ./topology.qrc           \
                ./theme/qan/qan-theme.qrc
 
 SOURCES     +=  ./topology.cpp      \
-                ./qanFaceNode.cpp
+                ./qanFaceNode.cpp \
 
 HEADERS     +=  ./qanFaceNode.h     \
-                ./topology.qml
+                ./topology.qml \
 
 OTHER_FILES +=  topology.qml        \
                 FaceNode.qml        \
                 NodesListView.qml   \
                 EdgesListView.qml   \
-                ScreenshotPopup.qml
+                ScreenshotPopup.qml \
+                ProcessingNode.qml

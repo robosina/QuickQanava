@@ -2,6 +2,7 @@
     <qresource prefix="/">
         <file>topology.qml</file>
         <file>FaceNode.qml</file>
+        <file>ProcessingNode.qml</file>
         <file>EdgesListView.qml</file>
         <file>NodesListView.qml</file>
         <file>ScreenshotPopup.qml</file>
@@ -17,5 +18,6 @@
         <file>faces/VD2.jpg</file>
         <file>faces/VD3.jpg</file>
         <file>qtquickcontrols2.conf</file>
+        <file>faces/sa.jpg</file>
     </qresource>
 </RCC>
