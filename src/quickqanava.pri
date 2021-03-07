@@ -91,4 +91,4 @@ OTHER_FILES +=  $$PWD/QuickQanava                   \
                 $$PWD/StyleListView.qml             \
                 $$PWD/VisualConnector.qml           \
                 $$PWD/LabelEditor.qml               \
-                $$PWD/qmldir_static
+                $$PWD/qmldir_static \

@@ -78,4 +78,18 @@ QQmlComponent *ProcessingNode::delegate(QQmlEngine &engine) noexcept
     return delegate.get();
 }
 
+QString ProcessingNode::rtsp() const
+{
+    return m_rtsp;
+}
+
+void ProcessingNode::setRtsp(QString rtsp)
+{
+    if (m_rtsp == rtsp)
+        return;
+
+    m_rtsp = rtsp;
+    emit rtspChanged(m_rtsp);
+}
+
 } // ::qan

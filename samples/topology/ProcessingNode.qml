@@ -42,8 +42,8 @@ import "qrc:/QuickQanava"   as Qan
 
 Qan.NodeItem {
    id: faceNodeItem
-   Layout.preferredWidth: 220
-   Layout.preferredHeight: 220
+   Layout.preferredWidth: 160
+   Layout.preferredHeight: 160
    width: Layout.preferredWidth
    height: Layout.preferredHeight
 
@@ -63,11 +63,19 @@ Qan.NodeItem {
        anchors.horizontalCenter: parent.horizontalCenter
        padding: 1
        opacity: 0.9
-       RowLayout {
+       ColumnLayout {
            Label {
                Layout.maximumWidth: faceNodeItem.width - 10
                z: 3
                text: faceNodeItem.node.label
+               horizontalAlignment: Text.AlignHCenter
+               maximumLineCount: 2; elide: Text.ElideLeft
+           }
+
+           Label {
+               Layout.maximumWidth: faceNodeItem.width - 10
+               z: 3
+               text: faceNodeItem.node.rtsp
                horizontalAlignment: Text.AlignHCenter
                maximumLineCount: 2; elide: Text.ElideLeft
            }
@@ -78,7 +86,7 @@ Qan.NodeItem {
        padding: 1
        anchors.left: parent.left; anchors.bottom: parent.bottom;
        opacity: 0.9
-       Label { text: image.sourceSize.width + "x" + image.sourceSize.height + "px" }
+//       Label { text: image.sourceSize.width + "x" + image.sourceSize.height + "px" }
    }
    Image {
        id: image
@@ -86,6 +94,8 @@ Qan.NodeItem {
        anchors.fill: parent
        smooth: true
        source: faceNodeItem.node.image
+       antialiasing: true
+       mipmap: true
        onSourceSizeChanged: {
            if ( sourceSize.width > 0 && sourceSize.height > 0 ) {
                faceNodeItem.ratio = sourceSize.width / sourceSize.height;

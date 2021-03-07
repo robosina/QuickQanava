@@ -78,22 +78,114 @@ private:
     Q_DISABLE_COPY(ProcessingNode)
 public:
     Q_PROPERTY(QUrl image READ getImage WRITE setImage NOTIFY imageChanged)
+    Q_PROPERTY(QString rtsp READ rtsp WRITE setRtsp NOTIFY rtspChanged)
+    Q_PROPERTY(QString clientp READ clientp WRITE setClientp NOTIFY clientpChanged)
+    Q_PROPERTY(QString serverp READ serverp WRITE setServerp NOTIFY serverpChanged)
+    Q_PROPERTY(QString nameofloc READ nameofloc WRITE setNameofloc NOTIFY nameoflocChanged)
+    Q_PROPERTY(QString nodeip READ nodeip WRITE setNodeip NOTIFY nodeipChanged)
     const QUrl&     getImage() const noexcept { return _image; }
     void            setImage(QUrl image) noexcept;
 private:
     QUrl            _image;
+    QString m_rtsp;
+
+    QString m_clientp;
+
+    QString m_serverp;
+
+    QString m_nameofloc;
+
+    QString m_nodeip;
 
 signals:
     void            imageChanged();
 
     /*! \name Node Static Factories *///---------------------------------------
     //@{
+    void rtspChanged(QString rtsp);
+
+    void clientpChanged(QString clientp);
+
+    void serverpChanged(QString serverp);
+
+    void nameoflocChanged(QString nameofloc);
+
+    void nodeipChanged(QString nodeip);
+
 public:
     static  QQmlComponent*      delegate(QQmlEngine& engine) noexcept;
     //@}
     //-------------------------------------------------------------------------
+    QString rtsp() const;
+    QString clientp() const
+    {
+        return m_clientp;
+    }
+
+    QString serverp() const
+    {
+        return m_serverp;
+    }
+
+    QString nameofloc() const
+    {
+        return m_nameofloc;
+    }
+
+    QString nodeip() const
+    {
+        return m_nodeip;
+    }
+
+public slots:
+    void setRtsp(QString rtsp);
+    void setClientp(QString clientp)
+    {
+        if (m_clientp == clientp)
+            return;
+
+        m_clientp = clientp;
+        emit clientpChanged(m_clientp);
+    }
+    void setServerp(QString serverp)
+    {
+        if (m_serverp == serverp)
+            return;
+
+        m_serverp = serverp;
+        emit serverpChanged(m_serverp);
+    }
+    void setNameofloc(QString nameofloc)
+    {
+        if (m_nameofloc == nameofloc)
+            return;
+
+        m_nameofloc = nameofloc;
+        emit nameoflocChanged(m_nameofloc);
+    }
+    void setnodeip(QString nodeip)
+    {
+        if (m_nodeip == nodeip)
+            return;
+
+        m_nodeip = nodeip;
+        emit nodeipChanged(m_nodeip);
+    }
+    void setNodeip(QString nodeip)
+    {
+        if (m_nodeip == nodeip)
+            return;
+
+        m_nodeip = nodeip;
+        emit nodeipChanged(m_nodeip);
+    }
 };
 
+
+
+////////
+/// \brief The FaceGraph class
+///
 class FaceGraph : public qan::Graph
 {
     Q_OBJECT

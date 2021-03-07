@@ -35,710 +35,872 @@ import QuickQanava      2.0 as Qan
 import TopologySample   1.0 as Qan
 import "qrc:/QuickQanava" as Qan
 
+import "./Component" as Settings
+
+
 ApplicationWindow {
     id: window
     visible: true
     width: 1280
     height: 720 // MPEG - 2 HD 720p - 1280 x 720 16:9
-    title: "Topology test"
-    Pane {
-        anchors.fill: parent
-        padding: 0
-    }
-    ScreenshotPopup {
-        id: screenshotPopup
-        graphView: graphView
-    }
-    Menu {
-        id: menu
-        title: "Main Menu"
-        property var targetNode: undefined
-        property var targetGroup: undefined
-        property var targetEdge: undefined
-        onClosed: {
-            menu.targetNode = undefined
-            menu.targetGroup = undefined
-            menu.targetEdge = undefined
-        }
-        MenuItem {
-            text: "اضافه کردن نود جدید"
-            onTriggered: {
-                var n = topology.insertNode()
-                centerItem(n.item)
-                n.label = "Node #" + topology.getNodeCount()
-            }
-        }
-        MenuItem {
-            text: {
-                if (topology.selectedNodes.length > 1)
-                    return "حذف کردن همه‌ی نودها"
-                else if (menu.targetGroup !== undefined)
-                    return "حذف کردن گروه"
-                return "حذف کردن نود"
-            }
-            enabled: menu.targetNode !== undefined ||
-                     menu.targetGroup !== undefined ||
-                     topology.selectedNodes.length > 1
-            onTriggered: {
-                if (topology.selectedNodes.length > 1) {
-                    let nodes = []  // Copy the original selection, since removing nodes also modify selection
-                    var n = 0
-                    for (n = 0; n < topology.selectedNodes.length; n++)
-                        nodes.push(topology.selectedNodes.at(n))
-                    for (n = 0; n < nodes.length; n++) {
-                        let node = nodes[n]
-                        console.error('node.isGroup=' + node.isGroup())
-                        topology.removeNode(nodes[n])
-                    }
-                } else if (menu.targetNode !== undefined)
-                    topology.removeNode(menu.targetNode)
-                else if (menu.targetGroup !== undefined)
-                    topology.removeGroup(menu.targetGroup)
-                menu.targetNode = undefined
-            }
-        }
-        MenuItem {
-            text: "Remove edge"
-            enabled: menu.targetEdge !== undefined
-            onTriggered: {
-                if (menu.targetEdge !== undefined)
-                    topology.removeEdge(menu.targetEdge)
-                menu.targetEdge = undefined
-            }
-        }
-        MenuItem {
-            text: "اضافه کردن گروه"
-            onTriggered: {
-                var n = topology.insertGroup()
-                centerItem(n.item)
-                n.label = "Group #" + topology.getGroupCount()
-            }
-        }
-        Menu {
-            title: "Align"
-            MenuItem {
-                text: "Align Horizontal Center"
-                icon.name: 'ink-align-horizontal-center-symbolic'
-                enabled: (topology.selectedNodes.length + topology.selectedGroups.length) > 1
-                onTriggered: topology.alignSelectionHorizontalCenter()
-            }
-            MenuItem {
-                text: "Align Left"
-                icon.name: 'ink-align-horizontal-left-symbolic'
-                enabled: (topology.selectedNodes.length + topology.selectedGroups.length) > 1
-                onTriggered: topology.alignSelectionLeft()
-            }
-            MenuItem {
-                text: "Align Right"
-                icon.name: 'ink-align-horizontal-right-symbolic'
-                enabled: (topology.selectedNodes.length + topology.selectedGroups.length) > 1
-                onTriggered: topology.alignSelectionRight()
-            }
-            MenuItem {
-                text: "Align Top"
-                icon.name: 'ink-align-vertical-top-symbolic'
-                enabled: (topology.selectedNodes.length + topology.selectedGroups.length) > 1
-                onTriggered: topology.alignSelectionTop()
-            }
-            MenuItem {
-                text: "Align Bottom"
-                icon.name: 'ink-align-vertical-bottom-symbolic'
-                enabled: (topology.selectedNodes.length + topology.selectedGroups.length) > 1
-                onTriggered: topology.alignSelectionBottom()
-            }
-        } // Menu: align
-        Menu {
-            title: "Ports"
-            MenuItem {
-                text: "Add Left port"
-                enabled: menu.targetNode !== undefined
-                onTriggered: {
-                    var inPort = topology.insertPort(menu.targetNode,
-                                                     Qan.NodeItem.Left)
-                    inPort.label = "LPORT"
-                }
-            }
-            MenuItem {
-                text: "Add Top port"
-                enabled: menu.targetNode !== undefined
-                onTriggered: topology.insertPort(menu.targetNode,
-                                                 Qan.NodeItem.Top, "IN")
-            }
-            MenuItem {
-                text: "Add Right port"
-                enabled: menu.targetNode !== undefined
-                onTriggered: topology.insertPort(menu.targetNode,
-                                                 Qan.NodeItem.Right, "RPORT")
-            }
-            MenuItem {
-                text: "Add Bottom port"
-                enabled: menu.targetNode !== undefined
-                onTriggered: topology.insertPort(menu.targetNode,
-                                                 Qan.NodeItem.Bottom, "IN")
-            }
-        } // Menu: ports
-        MenuSeparator { }
-        MenuItem {
-            text: "نمایش رادار"
-            onTriggered: graphPreview.visible = checked
-            checkable: true
-            checked: graphPreview.visible
-        }
-        MenuItem {
-            text: "خروجی گرفتن"
-            onTriggered: screenshotPopup.open()
-        }
-        MenuItem {
-            text: "فیت کردن"
-            onTriggered: graphView.fitInView()
-        }
-        MenuItem {
-            text: "پاک کردن نودهای پارکینگ"
-            onTriggered: topology.clearGraph()
-        }
-    } // Menu: menu
+    title: "Cameras topology"
 
-    Menu {
-        id: menuRmPort
-        title: "Port Menu"
-        property var targetPort: undefined
-
-        MenuItem {
-            text: "Remove port"
-            enabled: menuRmPort.targetPort !== undefined
-            onTriggered: {
-                if (menuRmPort.targetPort !== undefined)
-                    topology.removePort(menuRmPort.targetPort.node,
-                                        menuRmPort.targetPort)
-                menuRmPort.targetPort = undefined
+    function returnNode() {
+        if (topology.selectedNodes.length === 1)
+        {
+            var n = 0
+            for (n = 0; n < topology.selectedNodes.length; n++){
+                let node = topology.selectedNodes.at(n)
+                return node
             }
         }
+        return false
     }
 
-    function centerItem(item) {
-        if (!item || !window.contentItem)
-            return
-        var windowCenter = Qt.point(
-                    (window.contentItem.width - item.width) / 2.,
-                    (window.contentItem.height - item.height) / 2.)
-        var graphNodeCenter = window.contentItem.mapToItem(
-                    graphView.containerItem, windowCenter.x, windowCenter.y)
-        item.x = graphNodeCenter.x
-        item.y = graphNodeCenter.y
+    Settings.Setting{
+        id:setting_handler
     }
 
-    Qan.GraphView {
-        id: graphView
-        anchors.fill: parent
-        graph: topology
-        navigable: true
-        resizeHandlerColor: Material.accent
-        gridThickColor: Material.theme === Material.Dark ? "#4e4e4e" : "#c1c1c1"
 
-        Qan.FaceGraph {
-            id: topology
-            objectName: "graph"
-            anchors.fill: parent
-            clip: true
-            connectorEnabled: true
-            selectionColor: Material.accent
-            connectorColor: Material.accent
-            connectorEdgeColor: Material.accent
-            onConnectorEdgeInserted: {
-                if (edge)
-                    edge.label = "My edge"
-            }
-            property Component faceNodeComponent: Qt.createComponent("qrc:/FaceNode.qml")
-            onNodeClicked: {
-                portsListView.model = node.item.ports
-            }
-            onNodeRightClicked: {
-                var globalPos = node.item.mapToItem(topology, pos.x, pos.y)
-                menu.x = globalPos.x
-                menu.y = globalPos.y
-                menu.targetNode = node
-                menu.open()
-            }
-            onGroupRightClicked: {
-                var globalPos = group.item.mapToItem(topology, pos.x, pos.y)
-                menu.x = globalPos.x
-                menu.y = globalPos.y
-                menu.targetGroup = group
-                menu.open()
-            }
-            onEdgeRightClicked: {
-                if (!edge || !edge.item)
-                    return
-                var globalPos = edge.item.mapToItem(topology, pos.x, pos.y)
-                menu.x = globalPos.x
-                menu.y = globalPos.y
-                menu.targetEdge = edge
-                menu.open()
-            }
-            onPortRightClicked: {
-                var globalPos = port.parent.mapToItem(topology, pos.x, pos.y)
-                menuRmPort.x = globalPos.x
-                menuRmPort.y = globalPos.y
-                menuRmPort.targetPort = port
-                menuRmPort.open()
-            }
-
-            Component.onCompleted: {
-                defaultEdgeStyle.lineWidth = 3
-                defaultEdgeStyle.lineColor = Qt.binding(function () {
-                    return Material.foreground
-                })
-                defaultNodeStyle.shadowColor = Qt.binding(function () {
-                    return Material.theme === Material.Dark ? Qt.darker(
-                                                                  Material.foreground) : Qt.darker(
-                                                                  Material.foreground)
-                })
-                defaultNodeStyle.backColor = Qt.binding(function () {
-                    return Material.theme === Material.Dark ? Qt.lighter(
-                                                                  Material.background) : Qt.lighter(
-                                                                  Material.background)
-                })
-                defaultGroupStyle.backColor = Qt.binding(function () {
-                    return Material.theme === Material.Dark ? Qt.lighter(
-                                                                  Material.background,
-                                                                  1.3) : Qt.darker(
-                                                                  Material.background,
-                                                                  1.1)
-                })
-//                var bw1 = topology.insertFaceNode()
-//                bw1.image = "qrc:/faces/BW1.jpg"
-//                bw1.item.x = 150
-//                bw1.item.y = 55
-//                var bw1p1 = topology.insertPort(bw1, Qan.NodeItem.Right)
-//                bw1p1.label = "P#1"
-//                var bw1p2 = topology.insertPort(bw1, Qan.NodeItem.Bottom)
-//                bw1p2.label = "P#2"
-//                var bw1p3 = topology.insertPort(bw1, Qan.NodeItem.Bottom)
-//                bw1p3.label = "P#3"
-
-                var bw2 = topology.insertProcessingNode()
-                bw2.image = "qrc:/faces/sa.jpg"
-                bw2.item.x = 150
-                bw2.item.y = 55
-
-                var bw3 = topology.insertProcessingNode()
-                bw3.image = "qrc:/faces/sa.jpg"
-
-                var bw4 = topology.insertProcessingNode()
-                bw4.image = "qrc:/faces/sa.jpg"
-                bw4.item.x = 250
-                bw4.item.y = 155
-
-
-            }
-        } // Qan.Graph: graph
-        onRightClicked: {
-            var globalPos = graphView.mapToItem(topology, pos.x, pos.y)
-            menu.x = globalPos.x
-            menu.y = globalPos.y
-            menu.targetNode = undefined
-            menu.targetEdge = undefined
-            menu.open()
-        }
-    }
-    Label {
-        text: "Right click for main menu:
-\t- Add content with Add Node or Add Face Node entries.
-\t- Use the DnD connector to add edges between nodes."
-    }
 
     RowLayout {
-        id: topDebugLayout
-        anchors.top: parent.top
-        anchors.right: parent.right
-        anchors.rightMargin: 15
-        anchors.topMargin: 5
-        spacing: 15
-        Frame {
-            id: edgesListView
-            Layout.preferredWidth: 200
-            Layout.preferredHeight: 200
-            Layout.alignment: Qt.AlignTop
-            visible: showDebugControls.checked
-            leftPadding: 0; rightPadding: 0
-            topPadding: 0;  bottomPadding: 0
-            Pane { anchors.fill: parent; anchors.margins: 1; opacity: 0.7 }
-            ColumnLayout {
+        anchors.fill: parent
+        Rectangle{
+            Layout.fillHeight: true
+            Layout.fillWidth: true
+            Pane {
                 anchors.fill: parent
-                anchors.margins: 10
-                Label {
-                    Layout.margins: 3
-                    text: "Edges:"
-                    font.bold: true
+                padding: 0
+            }
+            ScreenshotPopup {
+                id: screenshotPopup
+                graphView: graphView
+            }
+            Menu {
+                id: menu
+                title: "Main Menu"
+                property var targetNode: undefined
+                property var targetGroup: undefined
+                property var targetEdge: undefined
+                onClosed: {
+                    menu.targetNode = undefined
+                    menu.targetGroup = undefined
+                    menu.targetEdge = undefined
                 }
-                EdgesListView {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    model: topology.edges
+                MenuItem {
+                    text: "اضافه کردن نود پردازشی جدید"
+                    font.family: setting_handler.nazaninFont.name
+                    onTriggered: {
+                        var n = topology.insertProcessingNode()
+                        n.image = "qrc:/faces/sa.jpg"
+                        n.rtsp = "rtsp://admin:1q2w3e4r5t@192.168.1.112/live"
+                        n.clientp = "5557"
+                        n.serverp = "6000"
+                        n.nameofloc = "درب جنوب"
+                        n.nodeip = "192.168.1.112"
+                        //                        centerItem(n.item)
+                        n.label = "Node #" + topology.getNodeCount()
+                    }
+                }
+                MenuItem {
+                    text: "اضافه کردن رجیستر"
+                    font.family: setting_handler.nazaninFont.name
+                    onTriggered: {
+                        var n = topology.insertFaceNode()
+                        n.image = "qrc:/faces/sync.png"
+                        n.item.width = 100
+                        n.item.height = 100
+                        //                        n.rtsp = "rtsp://admin:1q2w3e4r5t@192.168.1.112/live"
+
+                        //                        centerItem(n.item)
+                        n.label = "Register #" + topology.getNodeCount()
+                    }
+                }
+                MenuItem {
+                    font.family: setting_handler.nazaninFont.name
+                    text: {
+                        if (topology.selectedNodes.length > 1)
+                            return "حذف کردن همه‌ی نودها"
+                        else if (menu.targetGroup !== undefined)
+                            return "حذف کردن گروه"
+                        return "حذف کردن نود"
+                    }
+                    enabled: menu.targetNode !== undefined ||
+                             menu.targetGroup !== undefined ||
+                             topology.selectedNodes.length > 1
+                    onTriggered: {
+                        if (topology.selectedNodes.length > 1) {
+                            let nodes = []  // Copy the original selection, since removing nodes also modify selection
+                            var n = 0
+                            for (n = 0; n < topology.selectedNodes.length; n++)
+                                nodes.push(topology.selectedNodes.at(n))
+                            for (n = 0; n < nodes.length; n++) {
+                                let node = nodes[n]
+                                console.error('node.isGroup=' + node.isGroup())
+                                topology.removeNode(nodes[n])
+                            }
+                        } else if (menu.targetNode !== undefined)
+                            topology.removeNode(menu.targetNode)
+                        else if (menu.targetGroup !== undefined)
+                            topology.removeGroup(menu.targetGroup)
+                        menu.targetNode = undefined
+                    }
+                }
+                MenuItem {
+                    text: "حذف کردن ارتباط"
+                    font.family: setting_handler.nazaninFont.name
+                    enabled: menu.targetEdge !== undefined
+                    onTriggered: {
+                        if (menu.targetEdge !== undefined)
+                            topology.removeEdge(menu.targetEdge)
+                        menu.targetEdge = undefined
+                    }
+                }
+                MenuItem {
+                    text: "اضافه کردن گروه"
+                    font.family: setting_handler.nazaninFont.name
+                    onTriggered: {
+                        var n = topology.insertGroup()
+                        centerItem(n.item)
+                        n.label = "Group #" + topology.getGroupCount()
+                    }
+                }
+                Menu {
+                    title: "مرتب سازی"
+                    font.family: setting_handler.nazaninFont.name
+                    MenuItem {
+                        text: "Align Horizontal Center"
+                        icon.name: 'ink-align-horizontal-center-symbolic'
+                        enabled: (topology.selectedNodes.length + topology.selectedGroups.length) > 1
+                        onTriggered: topology.alignSelectionHorizontalCenter()
+                    }
+                    MenuItem {
+                        text: "Align Left"
+                        icon.name: 'ink-align-horizontal-left-symbolic'
+                        enabled: (topology.selectedNodes.length + topology.selectedGroups.length) > 1
+                        onTriggered: topology.alignSelectionLeft()
+                    }
+                    MenuItem {
+                        text: "Align Right"
+                        icon.name: 'ink-align-horizontal-right-symbolic'
+                        enabled: (topology.selectedNodes.length + topology.selectedGroups.length) > 1
+                        onTriggered: topology.alignSelectionRight()
+                    }
+                    MenuItem {
+                        text: "Align Top"
+                        icon.name: 'ink-align-vertical-top-symbolic'
+                        enabled: (topology.selectedNodes.length + topology.selectedGroups.length) > 1
+                        onTriggered: topology.alignSelectionTop()
+                    }
+                    MenuItem {
+                        text: "Align Bottom"
+                        icon.name: 'ink-align-vertical-bottom-symbolic'
+                        enabled: (topology.selectedNodes.length + topology.selectedGroups.length) > 1
+                        onTriggered: topology.alignSelectionBottom()
+                    }
+                } // Menu: align
+                Menu {
+                    title: "Ports"
+                    MenuItem {
+                        text: "Add Left port"
+                        enabled: menu.targetNode !== undefined
+                        onTriggered: {
+                            var inPort = topology.insertPort(menu.targetNode,
+                                                             Qan.NodeItem.Left)
+                            inPort.label = "LPORT"
+                        }
+                    }
+                    MenuItem {
+                        text: "Add Top port"
+                        enabled: menu.targetNode !== undefined
+                        onTriggered: topology.insertPort(menu.targetNode,
+                                                         Qan.NodeItem.Top, "IN")
+                    }
+                    MenuItem {
+                        text: "Add Right port"
+                        enabled: menu.targetNode !== undefined
+                        onTriggered: topology.insertPort(menu.targetNode,
+                                                         Qan.NodeItem.Right, "RPORT")
+                    }
+                    MenuItem {
+                        text: "Add Bottom port"
+                        enabled: menu.targetNode !== undefined
+                        onTriggered: topology.insertPort(menu.targetNode,
+                                                         Qan.NodeItem.Bottom, "IN")
+                    }
+                } // Menu: ports
+                MenuSeparator { }
+                MenuItem {
+                    text: "نمایش رادار"
+                    font.family: setting_handler.nazaninFont.name
+                    onTriggered: graphPreview.visible = checked
+                    checkable: true
+                    checked: graphPreview.visible
+                }
+                MenuItem {
+                    text: "خروجی گرفتن"
+                    font.family: setting_handler.nazaninFont.name
+                    onTriggered: screenshotPopup.open()
+                }
+                MenuItem {
+                    text: "فیت کردن"
+                    font.family: setting_handler.nazaninFont.name
+                    onTriggered: graphView.fitInView()
+                }
+                MenuItem {
+                    text: "پاک کردن نودهای پارکینگ"
+                    font.family: setting_handler.nazaninFont.name
+                    onTriggered: topology.clearGraph()
+                }
+            } // Menu: menu
+
+            Menu {
+                id: menuRmPort
+                title: "Port Menu"
+                property var targetPort: undefined
+
+                MenuItem {
+                    text: "Remove port"
+                    enabled: menuRmPort.targetPort !== undefined
+                    onTriggered: {
+                        if (menuRmPort.targetPort !== undefined)
+                            topology.removePort(menuRmPort.targetPort.node,
+                                                menuRmPort.targetPort)
+                        menuRmPort.targetPort = undefined
+                    }
                 }
             }
-        } // Frame: edgesListView
 
-        Frame {
-            Layout.preferredWidth: 200
-            Layout.preferredHeight: 300
-            leftPadding: 0; rightPadding: 0
-            topPadding: 0;  bottomPadding: 0
-            visible: showDebugControls.checked
-            padding: 0
-            Pane { anchors.fill: parent; anchors.margins: 1; opacity: 0.7 }
-            ColumnLayout {
-                anchors.fill: parent
-                anchors.margins: 10
-                Label {
-                    Layout.margins: 3
-                    text: "Nodes:"
-                    font.bold: true
-                }
-                NodesListView {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    model: topology.nodes
-                    graphView: graphView
-                }
+            function centerItem(item) {
+                if (!item || !window.contentItem)
+                    return
+                var windowCenter = Qt.point(
+                            (window.contentItem.width - item.width) / 2.,
+                            (window.contentItem.height - item.height) / 2.)
+                var graphNodeCenter = window.contentItem.mapToItem(
+                            graphView.containerItem, windowCenter.x, windowCenter.y)
+                item.x = graphNodeCenter.x
+                item.y = graphNodeCenter.y
             }
-        } // Frame: nodesListView
 
-        Frame {
-            id: portList
-            Layout.preferredWidth: 200
-            Layout.preferredHeight: 300
-            visible: showDebugControls.checked
-            leftPadding: 0; rightPadding: 0
-            topPadding: 0;  bottomPadding: 0
-            Pane { anchors.fill: parent; anchors.margins: 1; opacity: 0.7 }
-            ColumnLayout {
+            Qan.GraphView {
+                id: graphView
                 anchors.fill: parent
-                anchors.margins: 10
-                Label {
-                    Layout.margins: 3
-                    text: "Selected Node's Ports:"
-                    font.bold: true
-                }
-                ListView {
-                    id: portsListView
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
+                graph: topology
+                navigable: true
+                resizeHandlerColor: Material.accent
+                gridThickColor: Material.theme === Material.Dark ? "#4e4e4e" : "#c1c1c1"
+
+                Qan.FaceGraph {
+                    id: topology
+                    objectName: "graph"
+                    anchors.fill: parent
                     clip: true
-                    spacing: 4
-                    focus: true
-                    flickableDirection: Flickable.VerticalFlick
-                    highlightFollowsCurrentItem: false
-                    highlight: Rectangle {
-                        x: 0
-                        y: portsListView.currentItem ? portsListView.currentItem.y : 0
-                        width: portsListView.width
-                        height: portsListView.currentItem ? portsListView.currentItem.height : 0
-                        color: Material.accent
-                        opacity: 0.7
-                        radius: 3
-                        visible: portsListView.currentItem !== undefined && portsListView.currentItem !== null
-                        Behavior on y {
-                            SpringAnimation {
-                                duration: 200
-                                spring: 2
-                                damping: 0.1
-                            }
-                        }
+                    connectorEnabled: true
+                    selectionColor: Material.accent
+                    connectorColor: Material.accent
+                    connectorEdgeColor: Material.accent
+                    onConnectorEdgeInserted: {
+                        if (edge)
+                            edge.label = "My edge"
                     }
-                    delegate: Item {
-                        id: portDelegate
-                        width: ListView.view.width
-                        height: 30
+                    property Component faceNodeComponent: Qt.createComponent("qrc:/FaceNode.qml")
+                    onNodeClicked: {
+                        console.log("clicked on node")
+                        portsListView.model = node.item.ports
+                        lnprid.cameraRtsp.text = node.rtsp
+                        lnprid.locationName.text = node.nameofloc
+                        lnprid.ipaddress.text = node.nodeip
+                        lnprid.portclient.text = node.clientp
+                        lnprid.serverportNumber.text = node.serverp
+                    }
+
+                    onNodeRightClicked: {
+                        var globalPos = node.item.mapToItem(topology, pos.x, pos.y)
+                        menu.x = globalPos.x
+                        menu.y = globalPos.y
+                        menu.targetNode = node
+                        menu.open()
+                    }
+                    onGroupRightClicked: {
+                        var globalPos = group.item.mapToItem(topology, pos.x, pos.y)
+                        menu.x = globalPos.x
+                        menu.y = globalPos.y
+                        menu.targetGroup = group
+                        menu.open()
+                    }
+                    onEdgeRightClicked: {
+                        if (!edge || !edge.item)
+                            return
+                        var globalPos = edge.item.mapToItem(topology, pos.x, pos.y)
+                        menu.x = globalPos.x
+                        menu.y = globalPos.y
+                        menu.targetEdge = edge
+                        menu.open()
+                    }
+                    onPortRightClicked: {
+                        var globalPos = port.parent.mapToItem(topology, pos.x, pos.y)
+                        menuRmPort.x = globalPos.x
+                        menuRmPort.y = globalPos.y
+                        menuRmPort.targetPort = port
+                        menuRmPort.open()
+                    }
+
+                    Component.onCompleted: {
+                        defaultEdgeStyle.lineWidth = 3
+                        defaultEdgeStyle.lineColor = Qt.binding(function () {
+                            return Material.foreground
+                        })
+                        defaultNodeStyle.shadowColor = Qt.binding(function () {
+                            return Material.theme === Material.Dark ? Qt.darker(
+                                                                          Material.foreground) : Qt.darker(
+                                                                          Material.foreground)
+                        })
+                        defaultNodeStyle.backColor = Qt.binding(function () {
+                            return Material.theme === Material.Dark ? Qt.lighter(
+                                                                          Material.background) : Qt.lighter(
+                                                                          Material.background)
+                        })
+                        defaultGroupStyle.backColor = Qt.binding(function () {
+                            return Material.theme === Material.Dark ? Qt.lighter(
+                                                                          Material.background,
+                                                                          1.3) : Qt.darker(
+                                                                          Material.background,
+                                                                          1.1)
+                        })
+                        //                var bw1 = topology.insertFaceNode()
+                        //                bw1.image = "qrc:/faces/BW1.jpg"
+                        //                bw1.item.x = 150
+                        //                bw1.item.y = 55
+                        //                var bw1p1 = topology.insertPort(bw1, Qan.NodeItem.Right)
+                        //                bw1p1.label = "P#1"
+                        //                var bw1p2 = topology.insertPort(bw1, Qan.NodeItem.Bottom)
+                        //                bw1p2.label = "P#2"
+                        //                var bw1p3 = topology.insertPort(bw1, Qan.NodeItem.Bottom)
+                        //                bw1p3.label = "P#3"
+
+                        //                        var bw2 = topology.insertProcessingNode()
+                        //                        bw2.image = "qrc:/faces/sa.jpg"
+                        //                        bw2.rtsp = "rtsp://admin:1q2w3e4r5t@192.168.1.112/live"
+                        //                bw2.item.x = 150
+                        //                bw2.item.y = 55
+
+                        //                var bw3 = topology.insertProcessingNode()
+                        //                bw3.image = "qrc:/faces/sa.jpg"
+
+                        //                var bw4 = topology.insertProcessingNode()
+                        //                bw4.image = "qrc:/faces/sa.jpg"
+                        //                bw4.item.x = 250
+                        //                bw4.item.y = 155
+
+
+                    }
+                } // Qan.Graph: graph
+                onRightClicked: {
+                    var globalPos = graphView.mapToItem(topology, pos.x, pos.y)
+                    menu.x = globalPos.x
+                    menu.y = globalPos.y
+                    menu.targetNode = undefined
+                    menu.targetEdge = undefined
+                    menu.open()
+                }
+            }
+            //            Label {
+            //                text: "Right click for main menu:
+            //\t- Add content with Add Node or Add Face Node entries.
+            //\t- Use the DnD connector to add edges between nodes."
+            //            }
+
+            RowLayout {
+                id: topDebugLayout
+                anchors.top: parent.top
+                anchors.right: parent.right
+                anchors.rightMargin: 15
+                anchors.topMargin: 5
+                spacing: 15
+                Frame {
+                    id: edgesListView
+                    Layout.preferredWidth: 200
+                    Layout.preferredHeight: 200
+                    Layout.alignment: Qt.AlignTop
+                    visible: showDebugControls.checked
+                    leftPadding: 0; rightPadding: 0
+                    topPadding: 0;  bottomPadding: 0
+                    Pane { anchors.fill: parent; anchors.margins: 1; opacity: 0.7 }
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: 10
                         Label {
-                            id: portLabel
-                            text: "Label: " + itemData.label
+                            Layout.margins: 3
+                            text: "Edges:"
+                            font.bold: true
                         }
-                        MouseArea {
-                            anchors.fill: portDelegate
+                        EdgesListView {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            model: topology.edges
+                        }
+                    }
+                } // Frame: edgesListView
+
+                Frame {
+                    Layout.preferredWidth: 200
+                    Layout.preferredHeight: 300
+                    leftPadding: 0; rightPadding: 0
+                    topPadding: 0;  bottomPadding: 0
+                    visible: showDebugControls.checked
+                    padding: 0
+                    Pane { anchors.fill: parent; anchors.margins: 1; opacity: 0.7 }
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: 10
+                        Label {
+                            Layout.margins: 3
+                            text: "Nodes:"
+                            font.bold: true
+                        }
+                        NodesListView {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            model: topology.nodes
+                            graphView: graphView
+                        }
+                    }
+                } // Frame: nodesListView
+
+                Frame {
+                    id: portList
+                    Layout.preferredWidth: 200
+                    Layout.preferredHeight: 300
+                    visible: showDebugControls.checked
+                    leftPadding: 0; rightPadding: 0
+                    topPadding: 0;  bottomPadding: 0
+                    Pane { anchors.fill: parent; anchors.margins: 1; opacity: 0.7 }
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: 10
+                        Label {
+                            Layout.margins: 3
+                            text: "Selected Node's Ports:"
+                            font.bold: true
+                        }
+                        ListView {
+                            id: portsListView
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            clip: true
+                            spacing: 4
+                            focus: true
+                            flickableDirection: Flickable.VerticalFlick
+                            highlightFollowsCurrentItem: false
+                            highlight: Rectangle {
+                                x: 0
+                                y: portsListView.currentItem ? portsListView.currentItem.y : 0
+                                width: portsListView.width
+                                height: portsListView.currentItem ? portsListView.currentItem.height : 0
+                                color: Material.accent
+                                opacity: 0.7
+                                radius: 3
+                                visible: portsListView.currentItem !== undefined && portsListView.currentItem !== null
+                                Behavior on y {
+                                    SpringAnimation {
+                                        duration: 200
+                                        spring: 2
+                                        damping: 0.1
+                                    }
+                                }
+                            }
+                            delegate: Item {
+                                id: portDelegate
+                                width: ListView.view.width
+                                height: 30
+                                Label {
+                                    id: portLabel
+                                    text: "Label: " + itemData.label
+                                }
+                                MouseArea {
+                                    anchors.fill: portDelegate
+                                    onClicked: {
+                                        portsListView.currentIndex = index
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } // portList
+            }  // RowLayout nodes / nodes ports / edge debug control
+
+            ColorDialog {
+                id: selectionColorDialog
+                title: "Selection hilight color"
+                onAccepted: {
+                    topology.selectionColor = color
+                }
+            }
+
+            Frame {
+                id: selectionView
+
+                anchors.top: topDebugLayout.bottom
+                anchors.topMargin: 15
+                anchors.right: parent.right
+                anchors.rightMargin: 15
+                width: 250
+                height: 280
+
+                visible: showDebugControls.checked
+
+                leftPadding: 0; rightPadding: 0
+                topPadding: 0;  bottomPadding: 0
+
+                Pane { anchors.fill: parent; anchors.margins: 1; opacity: 0.7 }
+                ColumnLayout {
+                    anchors.fill: parent
+                    anchors.margins: 10
+                    Label {
+                        Layout.margins: 3
+                        text: "Selection:"
+                        font.bold: true
+                        horizontalAlignment: Text.AlignLeft
+                    }
+                    ListView {
+                        id: selectionListView
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        clip: true
+                        model: topology.selectedNodes
+                        spacing: 4
+                        focus: true
+                        flickableDirection: Flickable.VerticalFlick
+                        highlightFollowsCurrentItem: false
+                        highlight: Rectangle {
+                            x: 0
+                            y: (selectionListView.currentItem
+                                !== null ? selectionListView.currentItem.y : 0)
+                            width: selectionListView.width
+                            height: selectionListView.currentItem ? selectionListView.currentItem.height : 0
+                            color: Material.accent
+                            opacity: 0.7
+                            radius: 3
+                            Behavior on y {
+                                SpringAnimation {
+                                    duration: 200
+                                    spring: 2
+                                    damping: 0.1
+                                }
+                            }
+                        }
+                        delegate: Item {
+                            id: selectedNodeDelegate
+                            width: ListView.view.width
+                            height: 30
+                            Label { text: "Label: " + itemData.label }
+                            MouseArea {
+                                anchors.fill: selectedNodeDelegate
+                                onClicked: {
+                                    selectedNodeDelegate.ListView.view.currentIndex = index
+                                }
+                            }
+                        }
+                    }
+                    RowLayout {
+                        Layout.margins: 2
+                        Label { text: "Policy:" }
+                        Item { Layout.fillWidth: true } // Space eater
+                        ColumnLayout {
+                            CheckBox {
+                                Layout.preferredHeight: 25
+                                height: 15
+                                autoExclusive: true
+                                text: "NoSelection"
+                                checked: topology.selectionPolicy === Qan.Graph.NoSelection
+                                onCheckedChanged: {
+                                    if (checked)
+                                        topology.selectionPolicy = Qan.Graph.NoSelection
+                                }
+                            }
+                            CheckBox {
+                                Layout.preferredHeight: 25
+                                height: 15
+                                autoExclusive: true
+                                text: "SelectOnClick"
+                                checked: topology.selectionPolicy === Qan.Graph.SelectOnClick
+                                onCheckedChanged: {
+                                    if (checked)
+                                        topology.selectionPolicy = Qan.Graph.SelectOnClick
+                                }
+                            }
+                            CheckBox {
+                                Layout.preferredHeight: 25
+                                height: 15
+                                autoExclusive: true
+                                text: "SelectOnCtrlClick"
+                                checked: topology.selectionPolicy === Qan.Graph.SelectOnCtrlClick
+                                onCheckedChanged: {
+                                    if (checked)
+                                        topology.selectionPolicy = Qan.Graph.SelectOnCtrlClick
+                                }
+                            }
+                        }
+                    }
+                    RowLayout {
+                        Layout.margins: 2
+                        Label { text: "Color:" }
+                        Item { Layout.fillWidth: true }        // Space eater
+                        Rectangle {
+                            Layout.preferredWidth: 25
+                            Layout.preferredHeight: 25
+                            color: topology.selectionColor
+                            radius: 3
+                            border.width: 1
+                            border.color: Qt.lighter(topology.selectionColor)
+                        }
+                        Button {
+                            Layout.preferredHeight: 30
+                            Layout.preferredWidth: 30
+                            text: "..."
                             onClicked: {
-                                portsListView.currentIndex = index
+                                selectionColorDialog.color = topology.selectionColor
+                                selectionColorDialog.open()
+                            }
+                        }
+                    }
+                    RowLayout {
+                        Layout.margins: 2
+                        Label { text: "Weight:" }
+                        Slider {
+                            Layout.preferredHeight: 20
+                            Layout.fillWidth: true
+                            from: 1.0
+                            to: 15.
+                            stepSize: 0.1
+                            value: topology.selectionWeight
+                            onValueChanged: {
+                                topology.selectionWeight = value
+                            }
+                        }
+                    }
+                    RowLayout {
+                        Layout.margins: 2
+                        Label {
+                            text: "Margin:"
+                        }
+                        Slider {
+                            Layout.preferredHeight: 20
+                            Layout.fillWidth: true
+                            from: 1.0
+                            to: 15.
+                            stepSize: 0.1
+                            value: topology.selectionMargin
+                            onValueChanged: {
+                                topology.selectionMargin = value
                             }
                         }
                     }
                 }
-            }
-        } // portList
-    }  // RowLayout nodes / nodes ports / edge debug control
+            } // selectionView
 
-    ColorDialog {
-        id: selectionColorDialog
-        title: "Selection hilight color"
-        onAccepted: {
-            topology.selectionColor = color
-        }
-    }
 
-    Frame {
-        id: selectionView
+            Control {
+                anchors.bottom: parent.bottom
+                anchors.left: parent.left
 
-        anchors.top: topDebugLayout.bottom
-        anchors.topMargin: 15
-        anchors.right: parent.right
-        anchors.rightMargin: 15
-        width: 250
-        height: 280
+                width: 470
+                height: 50
+                padding: 0
 
-        visible: showDebugControls.checked
-
-        leftPadding: 0; rightPadding: 0
-        topPadding: 0;  bottomPadding: 0
-
-        Pane { anchors.fill: parent; anchors.margins: 1; opacity: 0.7 }
-        ColumnLayout {
-            anchors.fill: parent
-            anchors.margins: 10
-            Label {
-                Layout.margins: 3
-                text: "Selection:"
-                font.bold: true
-                horizontalAlignment: Text.AlignLeft
-            }
-            ListView {
-                id: selectionListView
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                clip: true
-                model: topology.selectedNodes
-                spacing: 4
-                focus: true
-                flickableDirection: Flickable.VerticalFlick
-                highlightFollowsCurrentItem: false
-                highlight: Rectangle {
-                    x: 0
-                    y: (selectionListView.currentItem
-                        !== null ? selectionListView.currentItem.y : 0)
-                    width: selectionListView.width
-                    height: selectionListView.currentItem ? selectionListView.currentItem.height : 0
-                    color: Material.accent
-                    opacity: 0.7
-                    radius: 3
-                    Behavior on y {
-                        SpringAnimation {
-                            duration: 200
-                            spring: 2
-                            damping: 0.1
-                        }
-                    }
+                Pane {
+                    anchors.fill: parent
+                    opacity: 0.55
                 }
-                delegate: Item {
-                    id: selectedNodeDelegate
-                    width: ListView.view.width
-                    height: 30
-                    Label { text: "Label: " + itemData.label }
-                    MouseArea {
-                        anchors.fill: selectedNodeDelegate
-                        onClicked: {
-                            selectedNodeDelegate.ListView.view.currentIndex = index
-                        }
-                    }
-                }
-            }
-            RowLayout {
-                Layout.margins: 2
-                Label { text: "Policy:" }
-                Item { Layout.fillWidth: true } // Space eater
-                ColumnLayout {
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.margins: 0
                     CheckBox {
-                        Layout.preferredHeight: 25
-                        height: 15
-                        autoExclusive: true
-                        text: "NoSelection"
-                        checked: topology.selectionPolicy === Qan.Graph.NoSelection
-                        onCheckedChanged: {
-                            if (checked)
-                                topology.selectionPolicy = Qan.Graph.NoSelection
+                        text: qsTr("Dark")
+                        checked: ApplicationWindow.contentItem.Material.theme === Material.Dark
+                        onClicked: ApplicationWindow.contentItem.Material.theme
+                                   = checked ? Material.Dark : Material.Light
+                    }
+                    RowLayout {
+                        Layout.margins: 2
+                        Label {
+                            text: "Edge type:"
+                        }
+                        Item {
+                            Layout.fillWidth: true
+                        }
+                        ComboBox {
+                            model: ["Straight", "Curved"]
+                            enabled: defaultEdgeStyle !== undefined
+                            currentIndex: defaultEdgeStyle.lineType === Qan.EdgeStyle.Straight ? 0 : 1
+                            onActivated: {
+                                if (index == 0)
+                                    defaultEdgeStyle.lineType = Qan.EdgeStyle.Straight
+                                else if (index == 1)
+                                    defaultEdgeStyle.lineType = Qan.EdgeStyle.Curved
+                            }
+                        }
+                        CheckBox {
+                            id: showDebugControls
+                            text: "Show Debug controls"
+                            checked: false
+                        }
+                    } // RowLayout: edgeType
+                }
+            }
+
+            Qan.GraphPreview {
+                id: graphPreview
+                source: graphView
+                visibleWindowColor: Material.accent
+                anchors.right: graphView.right; anchors.bottom: graphView.bottom
+                anchors.rightMargin: 8; anchors.bottomMargin: 8
+                width: previewMenu.mediumPreview.width
+                height: previewMenu.mediumPreview.height
+                Menu {
+                    id: previewMenu
+                    readonly property size smallPreview: Qt.size(150, 85)
+                    readonly property size mediumPreview: Qt.size(250, 141)
+                    readonly property size largePreview: Qt.size(350, 198)
+                    MenuItem {
+                        text: "Hide preview"
+                        onTriggered: graphPreview.visible = false
+                    }
+                    MenuSeparator { }
+                    MenuItem {
+                        text: qsTr('Small')
+                        checkable: true
+                        checked: graphPreview.width === previewMenu.smallPreview.width &&
+                                 graphPreview.height === previewMenu.smallPreview.height
+                        onTriggered: {
+                            graphPreview.width = previewMenu.smallPreview.width
+                            graphPreview.height = previewMenu.smallPreview.height
                         }
                     }
-                    CheckBox {
-                        Layout.preferredHeight: 25
-                        height: 15
-                        autoExclusive: true
-                        text: "SelectOnClick"
-                        checked: topology.selectionPolicy === Qan.Graph.SelectOnClick
-                        onCheckedChanged: {
-                            if (checked)
-                                topology.selectionPolicy = Qan.Graph.SelectOnClick
+                    MenuItem {
+                        text: qsTr('Medium')
+                        checkable: true
+                        checked: graphPreview.width === previewMenu.mediumPreview.width &&
+                                 graphPreview.height === previewMenu.mediumPreview.height
+                        onTriggered: {
+                            graphPreview.width = previewMenu.mediumPreview.width
+                            graphPreview.height = previewMenu.mediumPreview.height
                         }
                     }
-                    CheckBox {
-                        Layout.preferredHeight: 25
-                        height: 15
-                        autoExclusive: true
-                        text: "SelectOnCtrlClick"
-                        checked: topology.selectionPolicy === Qan.Graph.SelectOnCtrlClick
-                        onCheckedChanged: {
-                            if (checked)
-                                topology.selectionPolicy = Qan.Graph.SelectOnCtrlClick
+                    MenuItem {
+                        text: qsTr('Large')
+                        checkable: true
+                        checked: graphPreview.width === previewMenu.largePreview.width &&
+                                 graphPreview.height === previewMenu.largePreview.height
+                        onTriggered: {
+                            graphPreview.width = previewMenu.largePreview.width
+                            graphPreview.height = previewMenu.largePreview.height
                         }
                     }
                 }
-            }
-            RowLayout {
-                Layout.margins: 2
-                Label { text: "Color:" }
-                Item { Layout.fillWidth: true }        // Space eater
-                Rectangle {
-                    Layout.preferredWidth: 25
-                    Layout.preferredHeight: 25
-                    color: topology.selectionColor
-                    radius: 3
-                    border.width: 1
-                    border.color: Qt.lighter(topology.selectionColor)
-                }
-                Button {
-                    Layout.preferredHeight: 30
-                    Layout.preferredWidth: 30
-                    text: "..."
-                    onClicked: {
-                        selectionColorDialog.color = topology.selectionColor
-                        selectionColorDialog.open()
-                    }
+                MouseArea {
+                    anchors.fill: parent
+                    acceptedButtons: Qt.RightButton
+                    onClicked: previewMenu.open(mouse.x, mouse.y)
                 }
             }
-            RowLayout {
-                Layout.margins: 2
-                Label { text: "Weight:" }
-                Slider {
-                    Layout.preferredHeight: 20
+        }
+
+        Pane{
+            Layout.fillHeight: true
+            Layout.preferredWidth: 600
+
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: 10
+
+                //select plugin
+                RowLayout{
                     Layout.fillWidth: true
-                    from: 1.0
-                    to: 15.
-                    stepSize: 0.1
-                    value: topology.selectionWeight
-                    onValueChanged: {
-                        topology.selectionWeight = value
+                    Layout.fillHeight: true
+                    Button {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 60
+                        id: pluginselector
+                        text: "انتخاب پلاگین"
+                        onClicked: pluginmenu.open()
+                        font.family: setting_handler.nazaninFont.name
+                        font.pointSize: setting_handler.pointsize
+                        Menu {
+                            id: pluginmenu
+                            y: pluginselector.height
+                            width: pluginselector.width
+
+                            MenuItem {
+                                LayoutMirroring.enabled: true
+                                text: "تشخیص پلاک"
+                                font.family: setting_handler.nazaninFont.name
+                                font.pointSize: setting_handler.pointsize-2
+                                onTriggered: {
+                                    pluginselector.text = text
+                                }
+                            }
+                            MenuItem {
+                                LayoutMirroring.enabled: true
+                                text: "تشخیص چهره"
+                                font.family: setting_handler.nazaninFont.name
+                                font.pointSize: setting_handler.pointsize-2
+                                onTriggered: {
+                                    pluginselector.text = text
+                                }
+                            }
+                            MenuItem {
+                                LayoutMirroring.enabled: true
+                                text: "تشخیص دعوا"
+                                font.family: setting_handler.nazaninFont.name
+                                font.pointSize: setting_handler.pointsize-2
+                                onTriggered: {
+                                    pluginselector.text = text
+                                }
+                            }
+                        }
                     }
+
+                    //                            Settings.LabelApp{
+                    //                                Layout.preferredWidth: 50
+                    //                                Layout.preferredHeight: 50
+                    //                                labelradius: 25
+                    //                                labelstring: "1"
+                    //                            }
+
                 }
-            }
-            RowLayout {
-                Layout.margins: 2
-                Label {
-                    text: "Margin:"
-                }
-                Slider {
-                    Layout.preferredHeight: 20
+
+
+
+
+                //config section
+                Pane{
+                    Layout.fillHeight: true
                     Layout.fillWidth: true
-                    from: 1.0
-                    to: 15.
-                    stepSize: 0.1
-                    value: topology.selectionMargin
-                    onValueChanged: {
-                        topology.selectionMargin = value
+                    Settings.LNPR{
+                        id:lnprid
+                        anchors.fill: parent
+                        anchors.margins: 10
+
+                        ipaddress.onTextChanged: {
+                            let node = returnNode()
+                            if(node!==false){
+                                node.rtsp = ipaddress.text
+                            }
+                        }
                     }
                 }
-            }
-        }
-    } // selectionView
 
 
-    Control {
-        anchors.bottom: parent.bottom
-        anchors.left: parent.left
-
-        width: 470
-        height: 50
-        padding: 0
-
-        Pane {
-            anchors.fill: parent
-            opacity: 0.55
-        }
-        RowLayout {
-            anchors.fill: parent
-            anchors.margins: 0
-            CheckBox {
-                text: qsTr("Dark")
-                checked: ApplicationWindow.contentItem.Material.theme === Material.Dark
-                onClicked: ApplicationWindow.contentItem.Material.theme
-                           = checked ? Material.Dark : Material.Light
-            }
-            RowLayout {
-                Layout.margins: 2
-                Label {
-                    text: "Edge type:"
-                }
-                Item {
+                Button{
+                    Layout.preferredHeight: 60
                     Layout.fillWidth: true
-                }
-                ComboBox {
-                    model: ["Straight", "Curved"]
-                    enabled: defaultEdgeStyle !== undefined
-                    currentIndex: defaultEdgeStyle.lineType === Qan.EdgeStyle.Straight ? 0 : 1
-                    onActivated: {
-                        if (index == 0)
-                            defaultEdgeStyle.lineType = Qan.EdgeStyle.Straight
-                        else if (index == 1)
-                            defaultEdgeStyle.lineType = Qan.EdgeStyle.Curved
-                    }
-                }
-                CheckBox {
-                    id: showDebugControls
-                    text: "Show Debug controls"
-                    checked: false
-                }
-            } // RowLayout: edgeType
-        }
-    }
-
-    Qan.GraphPreview {
-        id: graphPreview
-        source: graphView
-        visibleWindowColor: Material.accent
-        anchors.right: graphView.right; anchors.bottom: graphView.bottom
-        anchors.rightMargin: 8; anchors.bottomMargin: 8
-        width: previewMenu.mediumPreview.width
-        height: previewMenu.mediumPreview.height
-        Menu {
-            id: previewMenu
-            readonly property size smallPreview: Qt.size(150, 85)
-            readonly property size mediumPreview: Qt.size(250, 141)
-            readonly property size largePreview: Qt.size(350, 198)
-            MenuItem {
-                text: "Hide preview"
-                onTriggered: graphPreview.visible = false
-            }
-            MenuSeparator { }
-            MenuItem {
-                text: qsTr('Small')
-                checkable: true
-                checked: graphPreview.width === previewMenu.smallPreview.width &&
-                         graphPreview.height === previewMenu.smallPreview.height
-                onTriggered: {
-                    graphPreview.width = previewMenu.smallPreview.width
-                    graphPreview.height = previewMenu.smallPreview.height
+                    text: "اضافه کردن نود محاسباتی"
+                    font.family: setting_handler.nazaninFont.name
+                    font.pointSize: setting_handler.pointsize
                 }
             }
-            MenuItem {
-                text: qsTr('Medium')
-                checkable: true
-                checked: graphPreview.width === previewMenu.mediumPreview.width &&
-                         graphPreview.height === previewMenu.mediumPreview.height
-                onTriggered: {
-                    graphPreview.width = previewMenu.mediumPreview.width
-                    graphPreview.height = previewMenu.mediumPreview.height
-                }
-            }
-            MenuItem {
-                text: qsTr('Large')
-                checkable: true
-                checked: graphPreview.width === previewMenu.largePreview.width &&
-                         graphPreview.height === previewMenu.largePreview.height
-                onTriggered: {
-                    graphPreview.width = previewMenu.largePreview.width
-                    graphPreview.height = previewMenu.largePreview.height
-                }
-            }
-        }
-        MouseArea {
-            anchors.fill: parent
-            acceptedButtons: Qt.RightButton
-            onClicked: previewMenu.open(mouse.x, mouse.y)
         }
     }
 }  // ApplicationWindow

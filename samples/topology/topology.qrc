@@ -19,5 +19,11 @@
         <file>faces/VD3.jpg</file>
         <file>qtquickcontrols2.conf</file>
         <file>faces/sa.jpg</file>
+        <file>Component/InputField.qml</file>
+        <file>Component/LabelApp.qml</file>
+        <file>Component/LNPR.qml</file>
+        <file>Component/Setting.qml</file>
+        <file>faces/sync.svg</file>
+        <file>faces/sync.png</file>
     </qresource>
 </RCC>
